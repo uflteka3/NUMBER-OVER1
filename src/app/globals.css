@@ -1,0 +1,220 @@
+@import "tailwindcss";
+
+/* ============================================================
+   NUMBER OVER — Design Tokens
+   Identité : nuit profonde, iris électrique, cyan "signal".
+   ============================================================ */
+
+@theme {
+  /* Typographies (auto-hébergées via Fontsource) */
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* Nuit — fonds */
+  --color-night-950: #04060c;
+  --color-night-900: #070b14;
+  --color-night-850: #0b101d;
+  --color-night-800: #101728;
+  --color-night-750: #141c31;
+  --color-night-700: #1a2440;
+  --color-night-600: #28345c;
+  --color-night-500: #3b4a7d;
+
+  /* Brand — iris */
+  --color-brand-100: #e0e3ff;
+  --color-brand-200: #c7cdff;
+  --color-brand-300: #aab2ff;
+  --color-brand-400: #8d93ff;
+  --color-brand-500: #6f6cff;
+  --color-brand-600: #5b4df0;
+  --color-brand-700: #4a3bd0;
+
+  /* Accent — cyan signal */
+  --color-accent-100: #cffafe;
+  --color-accent-200: #a5f3fc;
+  --color-accent-300: #67e8f9;
+  --color-accent-400: #22d3ee;
+  --color-accent-500: #06b6d4;
+  --color-accent-600: #0891b2;
+
+  /* Sémantique */
+  --color-success-300: #6ee7b7;
+  --color-success-400: #34d399;
+  --color-success-500: #10b981;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-danger-300: #fda4af;
+  --color-danger-400: #fb7185;
+  --color-danger-500: #f43f5e;
+
+  /* Animations */
+  --animate-marquee: marquee 44s linear infinite;
+  --animate-marquee-reverse: marquee-reverse 52s linear infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-delayed: float 9s ease-in-out 1.4s infinite;
+  --animate-pulse-ring: pulse-ring 2.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  --animate-shimmer: shimmer 2.2s linear infinite;
+  --animate-blink: blink 1.5s ease-in-out infinite;
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes marquee-reverse {
+    from {
+      transform: translateX(-50%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(0.55);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1.9);
+      opacity: 0;
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+  @keyframes blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
+}
+
+/* ---------- Base ---------- */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+  }
+
+  body {
+    @apply bg-night-950 font-sans text-slate-300 antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgba(111, 108, 255, 0.4);
+    color: #f1f2ff;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-night-950);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-night-600);
+    border-radius: 999px;
+    border: 2px solid var(--color-night-950);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-night-500);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-400);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* ---------- Utilitaires signature ---------- */
+
+@utility glass {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+@utility glass-strong {
+  background: linear-gradient(160deg, rgba(20, 26, 46, 0.82), rgba(10, 14, 26, 0.88));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+@utility text-gradient {
+  background-image: linear-gradient(100deg, var(--color-brand-300) 10%, var(--color-accent-300) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility bg-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+@utility shadow-glow {
+  box-shadow:
+    0 0 0 1px rgba(141, 147, 255, 0.22),
+    0 12px 44px -12px rgba(111, 108, 255, 0.55);
+}
+
+@utility shadow-card {
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
+    0 20px 50px -24px rgba(0, 0, 0, 0.7);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility mask-fade-x {
+  mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+}
+
+/* ---------- Accessibilité mouvement ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
