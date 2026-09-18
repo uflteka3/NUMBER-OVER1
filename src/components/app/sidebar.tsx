@@ -55,7 +55,22 @@ function Section({ section, pathname }: { section: NavSection; pathname: string 
   );
 }
 
-export function Sidebar() {
+export interface SidebarUserInfo {
+  name: string;
+  email: string;
+  balanceCents: number;
+  isAdmin: boolean;
+  live: boolean;
+}
+
+export function Sidebar({ user }: { user?: SidebarUserInfo }) {
+  const info = user ?? {
+    name: demoUser.name,
+    email: demoUser.email,
+    balanceCents: demoUser.balanceCents,
+    isAdmin: demoUser.role === "admin",
+    live: false,
+  };
   const pathname = usePathname();
 
   return (
@@ -68,23 +83,26 @@ export function Sidebar() {
         {NAV_SECTIONS.map((section, i) => (
           <Section key={section.title ?? i} section={section} pathname={pathname} />
         ))}
-        {demoUser.role === "admin" && <Section section={ADMIN_SECTION} pathname={pathname} />}
+        {info.isAdmin && <Section section={ADMIN_SECTION} pathname={pathname} />}
       </nav>
 
       <div className="glass mt-4 rounded-2xl p-3.5">
         <div className="flex items-center gap-3">
-          <Avatar name={demoUser.name} />
+          <Avatar name={info.name} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-white">{demoUser.name}</p>
+            <p className="truncate text-sm font-medium text-white">{info.name}</p>
             <p className="truncate font-mono text-[0.7rem] text-accent-300">
-              {formatUSD(demoUser.balanceCents)} <span className="text-slate-600">· démo</span>
+              {formatUSD(info.balanceCents)}
+              {!info.live && <span className="text-slate-600"> · démo</span>}
             </p>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between">
-          <Badge tone="warning" className="text-[0.62rem]">
-            Aperçu
-          </Badge>
+          {!info.live && (
+            <Badge tone="warning" className="text-[0.62rem]">
+              Aperçu
+            </Badge>
+          )}
           <Link
             href="/profil"
             className="text-xs font-medium text-slate-400 transition-colors hover:text-white"

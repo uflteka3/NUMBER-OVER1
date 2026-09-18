@@ -9,10 +9,19 @@ import { Logo } from "@/components/brand/logo";
 import { EASE } from "@/components/motion/reveal";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
+import { isSupabaseConfigured } from "@/lib/config";
 import { demoNotifications, demoUser } from "@/lib/demo/data";
 import { formatUSD } from "@/lib/format";
+import { signOut } from "@/server/auth/actions";
 import { ClientTime } from "./client-time";
 import { cn } from "@/lib/utils";
+
+/** Identité affichée (nom/email/solde) : démo par défaut, réelle en mode live. */
+export interface TopbarUserInfo {
+  name: string;
+  email: string;
+  balanceCents: number;
+}
 
 const TITLES: Array<[string, string]> = [
   ["/dashboard", "Tableau de bord"],
@@ -44,7 +53,12 @@ function useDropdown() {
   return { open, setOpen, containerRef };
 }
 
-export function Topbar() {
+export function Topbar({ user }: { user?: TopbarUserInfo }) {
+  const info = user ?? {
+    name: demoUser.name,
+    email: demoUser.email,
+    balanceCents: demoUser.balanceCents,
+  };
   const pathname = usePathname();
   const toast = useToast();
   const {
@@ -79,7 +93,7 @@ export function Topbar() {
             title="Solde du wallet (démo)"
           >
             <Wallet className="size-3.5 text-accent-400" />
-            {formatUSD(demoUser.balanceCents)}
+            {formatUSD(info.balanceCents)}
           </Link>
 
           <Link
@@ -160,7 +174,7 @@ export function Topbar() {
               aria-expanded={userOpen}
               className="rounded-full transition-transform hover:scale-105"
             >
-              <Avatar name={demoUser.name} />
+              <Avatar name={info.name} />
             </button>
             <AnimatePresence>
               {userOpen && (
@@ -172,8 +186,8 @@ export function Topbar() {
                   className="glass-strong absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-2xl p-1.5 shadow-glow"
                 >
                   <div className="border-b border-white/[0.06] px-3 py-3">
-                    <p className="text-sm font-semibold text-white">{demoUser.name}</p>
-                    <p className="truncate text-xs text-slate-500">{demoUser.email}</p>
+                    <p className="text-sm font-semibold text-white">{info.name}</p>
+                    <p className="truncate text-xs text-slate-500">{info.email}</p>
                   </div>
                   <div className="p-1">
                     <Link
@@ -186,6 +200,10 @@ export function Topbar() {
                     <button
                       onClick={() => {
                         setUserOpen(false);
+                        if (isSupabaseConfigured) {
+                          void signOut();
+                          return;
+                        }
                         toast.push({
                           tone: "info",
                           title: "Mode démonstration",

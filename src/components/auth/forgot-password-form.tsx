@@ -7,6 +7,8 @@ import { useDemoAction } from "@/components/app/demo-action";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
+import { isSupabaseConfigured } from "@/lib/config";
+import { requestPasswordReset } from "@/server/auth/actions";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -17,19 +19,29 @@ export function ForgotPasswordForm() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     if (!EMAIL_RE.test(email)) {
       setError("Entrez une adresse email valide.");
       return;
     }
     setError(undefined);
+
+    if (!isSupabaseConfigured) {
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+        setSent(true);
+        demoAction("L'envoi réel de l'email de réinitialisation", "Phase 4");
+      }, 700);
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSent(true);
-      demoAction("L'envoi réel de l'email de réinitialisation", "Phase 4");
-    }, 700);
+    await requestPasswordReset({ email });
+    // Toujours afficher la confirmation (ne jamais révéler si le compte existe)
+    setLoading(false);
+    setSent(true);
   }
 
   if (sent) {

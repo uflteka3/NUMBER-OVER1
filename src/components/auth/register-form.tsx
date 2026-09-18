@@ -9,6 +9,8 @@ import { PasswordStrength } from "@/components/auth/password-strength";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
+import { isSupabaseConfigured } from "@/lib/config";
+import { signUp } from "@/server/auth/actions";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -20,21 +22,59 @@ export function RegisterForm() {
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
-    const next: Record<string, string> = {};
-    if (name.trim().length < 2) next.name = "Entrez votre nom (2 caractères minimum).";
-    if (!EMAIL_RE.test(email)) next.email = "Entrez une adresse email valide.";
-    if (password.length < 8) next.password = "8 caractères minimum.";
-    if (!terms) next.terms = "Vous devez accepter les conditions d'utilisation.";
-    setErrors(next);
-    if (Object.keys(next).length > 0) return;
+    const errs: Record<string, string> = {};
+    if (name.trim().length < 2) errs.name = "Entrez votre nom (2 caractères minimum).";
+    if (!EMAIL_RE.test(email)) errs.email = "Entrez une adresse email valide.";
+    if (password.length < 8) errs.password = "8 caractères minimum.";
+    if (!terms) errs.terms = "Vous devez accepter les conditions d'utilisation.";
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    if (!isSupabaseConfigured) {
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+        demoAction("L'inscription (avec vérification d'email)", "Phase 4");
+      }, 700);
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      demoAction("L'inscription (avec vérification d'email)", "Phase 4");
-    }, 700);
+    const result = await signUp({ name: name.trim(), email, password });
+    setLoading(false);
+    if (result?.confirmationRequired) {
+      setConfirmationSent(true);
+    } else if (result?.error) {
+      setErrors({ form: "Impossible de créer le compte. Cette adresse est peut-être déjà utilisée." });
+    }
+    // session immédiate → redirection gérée par l'action
+  }
+
+  if (confirmationSent) {
+    return (
+      <Card className="p-6 text-center sm:p-8">
+        <span className="mx-auto flex size-14 items-center justify-center rounded-2xl border border-accent-500/30 bg-accent-500/10 text-accent-300">
+          <Mail className="size-7" />
+        </span>
+        <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-white">
+          Vérifiez votre boîte mail
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-slate-400">
+          Un lien de confirmation vient d'être envoyé à{" "}
+          <span className="font-medium text-white">{email}</span>. Cliquez dessus pour
+          activer votre compte<span className="text-slate-500"> (pensez aux indésirables)</span>.
+        </p>
+        <Link href="/auth/login" className="mt-6 block">
+          <Button variant="secondary" className="w-full">
+            Retour à la connexion
+          </Button>
+        </Link>
+      </Card>
+    );
   }
 
   return (
@@ -108,6 +148,12 @@ export function RegisterForm() {
           </label>
           {errors.terms && <p className="mt-1.5 text-xs text-danger-300">{errors.terms}</p>}
         </div>
+
+        {errors.form && (
+          <p role="alert" className="rounded-xl border border-danger-500/30 bg-danger-500/10 px-4 py-3 text-sm text-danger-500">
+            {errors.form}
+          </p>
+        )}
 
         <Button type="submit" className="w-full" size="lg" loading={loading}>
           Créer mon compte

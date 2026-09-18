@@ -8,28 +8,52 @@ import { useDemoAction } from "@/components/app/demo-action";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
+import { isSupabaseConfigured } from "@/lib/config";
+import { signInWithOAuth, signInWithPassword } from "@/server/auth/actions";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const demoAction = useDemoAction();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
   const [loading, setLoading] = useState(false);
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
-    const next: typeof errors = {};
-    if (!EMAIL_RE.test(email)) next.email = "Entrez une adresse email valide.";
-    if (password.length < 8) next.password = "8 caractères minimum.";
-    setErrors(next);
-    if (Object.keys(next).length > 0) return;
+    const errs: typeof errors = {};
+    if (!EMAIL_RE.test(email)) errs.email = "Entrez une adresse email valide.";
+    if (password.length < 8) errs.password = "8 caractères minimum.";
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    if (!isSupabaseConfigured) {
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+        demoAction("La connexion (email + mot de passe, session sécurisée)", "Phase 4");
+      }, 700);
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      demoAction("La connexion (email + mot de passe, session sécurisée)", "Phase 4");
-    }, 700);
+    const result = await signInWithPassword({ email, password, next });
+    setLoading(false);
+    if (result?.error === "invalid_credentials") {
+      setErrors({ form: "Email ou mot de passe incorrect." });
+    }
+    // succès → redirection gérée par l'action
+  }
+
+  async function googleSignIn() {
+    if (!isSupabaseConfigured) {
+      demoAction("La connexion OAuth (Google…)", "Phase 4");
+      return;
+    }
+    const result = await signInWithOAuth("google");
+    if (result?.url) window.location.href = result.url;
+    else setErrors({ form: "La connexion Google a échoué. Réessayez." });
   }
 
   return (
@@ -80,6 +104,12 @@ export function LoginForm() {
           </Link>
         </div>
 
+        {errors.form && (
+          <p role="alert" className="rounded-xl border border-danger-500/30 bg-danger-500/10 px-4 py-3 text-sm text-danger-500">
+            {errors.form}
+          </p>
+        )}
+
         <Button type="submit" className="w-full" size="lg" loading={loading}>
           Se connecter
         </Button>
@@ -94,7 +124,7 @@ export function LoginForm() {
         <Button
           variant="secondary"
           className="w-full"
-          onClick={() => demoAction("La connexion OAuth (Google…)", "Phase 4")}
+          onClick={() => void googleSignIn()}
         >
           <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
             <path fill="#EA4335" d="M12 5.04c1.62 0 3.06.56 4.2 1.64l3.12-3.12C17.46 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.25 9.14 5.04 12 5.04z"/>
